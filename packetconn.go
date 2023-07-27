@@ -18,6 +18,7 @@ type packetConn interface {
 	SetReadDeadline(t time.Time) error
 	WriteTo(b []byte, dst net.Addr) (int, error)
 	SetTTL(ttl int)
+	SetTOS(tos uint8)
 	SetMark(m uint) error
 	SetDoNotFragment() error
 }
@@ -25,6 +26,7 @@ type packetConn interface {
 type icmpConn struct {
 	c   *icmp.PacketConn
 	ttl int
+	tos uint8
 }
 
 func (c *icmpConn) Close() error {
@@ -33,6 +35,11 @@ func (c *icmpConn) Close() error {
 
 func (c *icmpConn) SetTTL(ttl int) {
 	c.ttl = ttl
+}
+
+
+func (c *icmpConn) SetTOS(tos uint8) {
+	c.tos = tos
 }
 
 func (c *icmpConn) SetReadDeadline(t time.Time) error {
@@ -45,7 +52,9 @@ func (c *icmpConn) WriteTo(b []byte, dst net.Addr) (int, error) {
 			return 0, err
 		}
 	}
+
 	if c.c.IPv4PacketConn() != nil {
+		c.c.IPv4PacketConn().SetTOS(int(c.tos))
 		if err := c.c.IPv4PacketConn().SetTTL(c.ttl); err != nil {
 			return 0, err
 		}

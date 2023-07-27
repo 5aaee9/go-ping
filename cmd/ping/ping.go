@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	probing "github.com/prometheus-community/pro-bing"
+	probing "github.com/5aaee9/go-ping"
 )
 
 var usage = `
@@ -42,6 +42,7 @@ func main() {
 	count := flag.Int("c", -1, "")
 	size := flag.Int("s", 24, "")
 	ttl := flag.Int("l", 64, "TTL")
+	tos := flag.Int("o", 0, "TOS")
 	privileged := flag.Bool("privileged", false, "")
 	flag.Usage = func() {
 		fmt.Print(usage)
@@ -90,6 +91,7 @@ func main() {
 	pinger.Interval = *interval
 	pinger.Timeout = *timeout
 	pinger.TTL = *ttl
+	pinger.TOS = uint8(*tos)
 	pinger.SetPrivileged(*privileged)
 
 	fmt.Printf("PING %s (%s):\n", pinger.Addr(), pinger.IPAddr())

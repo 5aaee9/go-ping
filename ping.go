@@ -221,6 +221,7 @@ type Pinger struct {
 	logger Logger
 
 	TTL int
+	TOS uint8
 }
 
 type packet struct {
@@ -419,6 +420,10 @@ func (p *Pinger) SetMark(m uint) {
 	p.mark = m
 }
 
+func (p *Pinger) SetTOS(tos uint8) {
+	p.TOS = tos
+}
+
 // Mark returns the mark to be set on outgoing ICMP packets.
 func (p *Pinger) Mark() uint {
 	return p.mark
@@ -460,6 +465,10 @@ func (p *Pinger) RunWithContext(ctx context.Context) error {
 		if err := conn.SetMark(p.mark); err != nil {
 			return fmt.Errorf("error setting mark: %v", err)
 		}
+	}
+
+	if p.TOS != 0 {
+		conn.SetTOS(p.TOS)
 	}
 
 	if p.df {
