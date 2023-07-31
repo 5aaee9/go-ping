@@ -222,6 +222,9 @@ type Pinger struct {
 
 	TTL int
 	TOS uint8
+
+	// Resolver is net.Resolver to resolve ip if domain
+	Resolver *net.Resolver
 }
 
 type packet struct {
@@ -338,15 +341,29 @@ func (p *Pinger) Resolve() error {
 	if len(p.addr) == 0 {
 		return errors.New("addr cannot be empty")
 	}
-	ipaddr, err := net.ResolveIPAddr(p.network, p.addr)
+
+	var ips []net.IPAddr
+	var err error
+
+	if p.Resolver != nil {
+		ips, err = p.Resolver.LookupIPAddr(context.Background(), p.addr)
+	} else {
+		ips, err = net.DefaultResolver.LookupIPAddr(context.Background(), p.addr)
+	}
+
 	if err != nil {
 		return err
 	}
 
-	p.ipv4 = isIPv4(ipaddr.IP)
+	if len(ips) == 0 {
+		return errors.New("domain resolve failed")
+	}
 
-	p.ipaddr = ipaddr
+	ip := ips[rand.Intn(len(ips))]
 
+	p.ipv4 = isIPv4(ip.IP)
+	p.ipaddr = &ip
+	
 	return nil
 }
 
